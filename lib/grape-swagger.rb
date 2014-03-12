@@ -224,6 +224,12 @@ module Grape
 
                 name        = (value.is_a?(Hash) && value[:full_name]) || param
 
+                if description.kind_of?(Hash)
+                  dataType = description[:type] || dataType
+                  paramType = description[:paramType] || paramType
+                  description = description[:notes]
+                end
+
                 parsed_params = {
                   paramType:    paramType,
                   name:         name,
