@@ -178,7 +178,7 @@ module Grape
 
               basePath                   = parse_base_path(base_path, request)
               api_description[:basePath] = basePath if basePath && basePath.size > 0
-              api_description[:models]   = parse_entity_models(models) unless models.empty?
+              api_description[:models]   = parse_entity_models(models.uniq) unless models.empty?
 
               api_description
             end
@@ -321,14 +321,31 @@ module Grape
 
             def parse_entity_models(models)
               result = {}
+              models_copy = models.dup
+              processed = []
 
-              models.each do |model|
+              while models_copy.any?
+                model = models_copy.shift
+                next if processed.include?(model)
                 name        = parse_entity_name(model)
                 properties  = {}
+                property_types = {}
+
+                model.exposures.each do |prop, data|
+                  if prop_model = data[:with] || data[:using]
+                    models_copy.unshift(prop_model)
+                    property_types[prop] = parse_entity_name(prop_model)
+                  end
+                end
 
                 model.documentation.each do |property_name, property_info|
                   properties[property_name] = property_info
-
+                  if property_types[property_name]
+                    properties[property_name][:type] = property_types[property_name] if property_info[:type].nil?
+                    if property_info[:type] == 'array' && property_info[:items].nil?
+                      properties[property_name][:items] = {:$ref => property_types[property_name]}
+                    end
+                  end
                   # rename Grape Entity's "desc" to "description"
                   if property_description = property_info.delete(:desc)
                     property_info[:description] = property_description
@@ -336,12 +353,12 @@ module Grape
                 end
 
                 result[name] = {
-                  id:         model.instance_variable_get(:@root) || name,
-                  name:       model.instance_variable_get(:@root) || name,
-                  properties: properties
+                    id:         model.instance_variable_get(:@root) || name,
+                    name:       model.instance_variable_get(:@root) || name,
+                    properties: properties
                 }
+                processed << model
               end
-
               result
             end
 
