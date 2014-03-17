@@ -143,6 +143,7 @@ module Grape
                   http_codes  = parse_http_codes(route.route_http_codes)
 
                   models += route.route_entity if route.route_entity
+                  models << route.route_respond_with if route.route_respond_with
 
                   operation = {
                     :produces   => content_types_for(target_class),
@@ -154,10 +155,13 @@ module Grape
                       parse_params(route.route_params, route.route_path, route.route_method, route.route_body_param_type)+
                       parse_body_param(route.route_body_param_type)
                   }
+
                   if route.route_type
                     operation.merge!(:type => route.route_type)
                     operation.merge!(:items => parse_items(route.route_items))
+                    models |= [route.route_items]
                   else
+                    operation.merge!(:type => 'Response') if route.route_respond_with
                     operation.merge!(:type => parse_entity_name(route.route_entity[-1])) if route.route_entity
                   end
                   operation.merge!(:responseMessages => http_codes) unless http_codes.empty?
@@ -327,6 +331,34 @@ module Grape
               while models_copy.any?
                 model = models_copy.shift
                 next if processed.include?(model)
+                if model.kind_of? Hash
+                  props = model.map do |key, value|
+                    if value.kind_of? Hash
+                      value[:type] = parse_entity_name(value[:type]) if value[:type] === Grape::Entity
+                      value[:items] = {:$ref => value[:items]} unless value[:items].kind_of?(Hash) or value[:items].nil?
+                      next [key, value]
+                    end
+                    if value.kind_of? Grape::Entity
+                      models_copy += [value]
+                      next [key, {type: parse_entity_name(value)}]
+                    end
+                    case value.name
+                      when 'Virtus::Attribute::Boolean'
+                        [key,{type: 'boolean'}]
+                      when 'Float', 'String', 'Integer'
+                        [key,{type: value.downcase}]
+                      else
+                        [key,{type:value}]
+                    end
+                  end
+
+                  result['Response'] = {
+                    id: 'Response',
+                    name: 'Response',
+                    properties: Hash[props]
+                  }
+                  next
+                end
                 name        = parse_entity_name(model)
                 properties  = {}
                 property_types = {}
