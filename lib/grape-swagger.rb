@@ -338,7 +338,7 @@ module Grape
                       value[:items] = {:$ref => value[:items]} unless value[:items].kind_of?(Hash) or value[:items].nil?
                       next [key, value]
                     end
-                    if value.kind_of? Grape::Entity
+                    if value <= Grape::Entity
                       models_copy += [value]
                       next [key, {type: parse_entity_name(value)}]
                     end
