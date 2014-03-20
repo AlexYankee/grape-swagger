@@ -334,8 +334,15 @@ module Grape
                 if model.kind_of? Hash
                   props = model.map do |key, value|
                     if value.kind_of? Hash
-                      value[:type] = parse_entity_name(value[:type]) if value[:type].kind_of?(Class) and value[:type] <= Grape::Entity
-                      value[:items] = parse_entity_name(value[:items]) if value[:items].kind_of?(Class) and value[:items] <= Grape::Entity
+                      if value[:type].kind_of?(Class) && value[:type] <= Grape::Entity
+                        models_copy += [value[:type]]
+                        value[:type] = parse_entity_name(value[:type])
+                      end
+
+                      if value[:items].kind_of?(Class) and value[:items] <= Grape::Entity
+                        models_copy += [value[:items]]
+                        value[:items] = parse_entity_name(value[:items])
+                      end
                       value[:items] = {:$ref => value[:items]} unless value[:items].kind_of?(Hash) or value[:items].nil?
                       next [key, value]
                     end
