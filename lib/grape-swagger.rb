@@ -374,7 +374,7 @@ module Grape
                 model.exposures.each do |prop, data|
                   if prop_model = data[:with] || data[:using]
                     models_copy.unshift(prop_model)
-                    property_types[prop] = parse_entity_name(prop_model)
+                    property_types[data[:as] || prop] = parse_entity_name(prop_model)
                   end
                 end
 
