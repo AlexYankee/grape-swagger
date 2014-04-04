@@ -333,6 +333,7 @@ module Grape
                 next if processed.include?(model)
                 if model.kind_of? Hash
                   props = model.map do |key, value|
+                    value = value.clone
                     if value.kind_of? Hash
                       if value[:type].kind_of?(Class) && value[:type] <= Grape::Entity
                         models_copy += [value[:type]]
