@@ -227,7 +227,7 @@ module Grape
                 next if body_param_type && paramType != 'path'
 
                 name        = (value.is_a?(Hash) && value[:full_name]) || param
-
+                items = nil
                 if description.kind_of?(Hash)
                   dataType = description[:type] || dataType
                   paramType = description[:paramType] || paramType
@@ -241,7 +241,8 @@ module Grape
                   description:  as_markdown(description),
                   type:         dataType,
                   dataType:     dataType,
-                  required:     required
+                  required:     required,
+                  items:  items
                 }
 
                 parsed_params.merge!({defaultValue: defaultValue}) if defaultValue
