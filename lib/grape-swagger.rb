@@ -232,6 +232,7 @@ module Grape
                   dataType = description[:type] || dataType
                   paramType = description[:paramType] || paramType
                   description = description[:notes]
+                  items = description[:items] ? description[:items] : nil
                 end
 
                 parsed_params = {
