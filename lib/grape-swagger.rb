@@ -231,8 +231,8 @@ module Grape
                 if description.kind_of?(Hash)
                   dataType = description[:type] || dataType
                   paramType = description[:paramType] || paramType
-                  description = description[:notes]
                   items = description[:items] ? description[:items] : nil
+                  description = description[:notes]
                 end
 
                 parsed_params = {
